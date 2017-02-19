@@ -1,0 +1,11 @@
+#!/bin/bash
+
+CHOICE=$(zenity --title "Session log out" --text "" --list --radiolist --column "" --column "Action" FALSE Reboot TRUE Shutdown)
+
+if [ "$CHOICE" = "Shutdown" ]; then
+	exec sudo shutdown -P now
+fi
+
+if [ "$CHOICE" = "Reboot" ]; then
+	exec sudo shutdown -r now
+fi

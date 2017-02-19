@@ -1,0 +1,11 @@
+--- a/xfce4-session-xfsm-manager.c	2017-07-26 00:12:00.812304063 +0200
++++ b/xfce4-session/xfsm-manager.c	2017-07-26 00:12:19.740304213 +0200
+@@ -1135,7 +1135,7 @@
+         {
+           /* if we're not specifying fast shutdown, and we're ok with
+            * prompting then ask the user what to do */
+-          if (!xfsm_logout_dialog (manager->session_name, &manager->shutdown_type, &shutdown_save))
++            system("xfce4-session-logout");
+             return;
+ 
+           /* |allow_shutdown_save| is ignored if we prompt the user.  i think

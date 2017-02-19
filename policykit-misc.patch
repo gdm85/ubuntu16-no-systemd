@@ -1,0 +1,43 @@
+--- a/debian/control	2016-01-14 06:00:25.000000000 +0100
++++ b/debian/control	2017-03-25 03:52:16.244008387 +0100
+@@ -18,8 +18,7 @@
+  gobject-introspection (>= 0.9.12-4~),
+  gir1.2-glib-2.0,
+  libglib2.0-doc,
+- libgtk-3-doc,
+- libsystemd-dev [linux-any]
++ libgtk-3-doc
+ Standards-Version: 3.9.6
+ Vcs-Git: git://anonscm.debian.org/pkg-utopia/policykit.git
+ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-utopia/policykit.git;a=summary
+@@ -27,7 +26,7 @@
+ 
+ Package: policykit-1
+ Architecture: any
+-Depends: ${shlibs:Depends}, ${misc:Depends}, libpam-systemd [linux-any], consolekit [!linux-any], dbus
++Depends: ${shlibs:Depends}, ${misc:Depends}, consolekit [!linux-any], dbus
+ Multi-Arch: foreign
+ Breaks: gdm3 (<< 3.8.4-7~)
+ Description: framework for managing administrative policies and privileges
+--- a/debian/rules	2016-01-14 06:00:25.000000000 +0100
++++ b/debian/rules	2017-03-25 03:49:04.812006870 +0100
+@@ -9,11 +9,7 @@
+ DPKG_GENSYMBOLS_CHECK_LEVEL=4
+ export DPKG_GENSYMBOLS_CHECK_LEVEL
+ 
+-ifeq (linux,$(DEB_HOST_ARCH_OS))
+-  SYSTEMD_CONFIG_FLAG = --enable-systemd
+-else
+-  SYSTEMD_CONFIG_FLAG = --disable-systemd
+-endif
++SYSTEMD_CONFIG_FLAG = --disable-systemd
+ 
+ override_dh_auto_configure:
+ 	dh_auto_configure -- \
+--- a/debian/policykit-1.install	2016-01-14 06:00:25.000000000 +0100
++++ b/debian/policykit-1.install	2017-03-25 03:50:48.076007688 +0100
+@@ -9,4 +9,3 @@
+ usr/share/dbus-1/
+ usr/share/locale/
+ var/lib/polkit-1/
+-debian/polkitd.service lib/systemd/system/
