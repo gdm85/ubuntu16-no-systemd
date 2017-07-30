@@ -29,12 +29,15 @@ patch -p1 < "$OWD/policykit-misc.patch"
 
 "$OWD/build-deps-locked.sh"
 
-set +e
-debuild -us -uc -i -I
-cd ..
+if [ ! -z "$PPA_UPDATE" ]; then
+	"$OWD/ppa-update.sh"
+else
+	debuild -us -uc -i -I
+	cd ..
 
-## save generated .deb packages
-mv *.deb "$OUT"
+	## save generated .deb packages
+	mv *.deb "$OUT"
+fi
 
 ## cleanup
 cd

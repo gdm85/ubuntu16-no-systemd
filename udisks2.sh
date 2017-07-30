@@ -31,20 +31,8 @@ mv control.1 control
 grep -vF systemd udisks2.install > new
 mv new udisks2.install
 cd ..
-cat<<'EOF' | patch -p1
---- a/debian/rules	2017-03-21 00:44:48.508422271 +0100
-+++ b/debian/rules	2017-03-21 00:44:56.636422335 +0100
-@@ -8,8 +8,7 @@
- 		--libexecdir=/usr/lib \
- 		--disable-silent-rules \
- 		--enable-gtk-doc \
--		--enable-fhs-media \
--		--with-systemdsystemunitdir=/lib/systemd/system
-+		--enable-fhs-media
- 
- override_dh_auto_build:
- 	dh_auto_build
-EOF
+
+patch -p1 < "$OWD/udisks2-no-systemd.patch"
 
 "$OWD/build-deps-locked.sh"
 
@@ -53,11 +41,15 @@ EOF
 cp "$OWD/10_disable-systemd.patch" debian/patches/
 echo "10_disable-systemd.patch" >> debian/patches/series
 
-debuild -us -uc -i -I
-cd ..
+if [ ! -z "$PPA_UPDATE" ]; then
+	"$OWD/ppa-update.sh"
+else
+	debuild -us -uc -i -I
+	cd ..
 
-## save generated .deb packages
-mv *.deb "$OUT"
+	## save generated .deb packages
+	mv *.deb "$OUT"
+fi
 
 ## cleanup
 cd

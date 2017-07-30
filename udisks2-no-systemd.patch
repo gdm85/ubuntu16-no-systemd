@@ -1,0 +1,25 @@
+--- a/debian/rules	2017-03-21 00:44:48.508422271 +0100
++++ b/debian/rules	2017-03-21 00:44:56.636422335 +0100
+@@ -8,8 +8,7 @@
+ 		--libexecdir=/usr/lib \
+ 		--disable-silent-rules \
+ 		--enable-gtk-doc \
+-		--enable-fhs-media \
+-		--with-systemdsystemunitdir=/lib/systemd/system
++		--enable-fhs-media
+ 
+ override_dh_auto_build:
+ 	dh_auto_build
+--- a/debian/changelog	2017-07-30 22:15:37.940703963 +0200
++++ b/debian/changelog	2017-07-30 22:15:32.380703885 +0200
+@@ -1,3 +1,10 @@
++udisks2 (2.1.7-1ubuntu1ppa1) xenial; urgency=medium
++
++  * Non-maintainer upload.
++  * Rip out systemd.
++
++ -- gdm85 <gdm85@users.noreply.github.com>  Sun, 30 Jul 2017 22:14:48 +0200
++
+ udisks2 (2.1.7-1ubuntu1) xenial; urgency=medium
+ 
+   * debian/patches/reread_parttable.patch: Reread partition table before

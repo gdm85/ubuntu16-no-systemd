@@ -41,3 +41,16 @@
  usr/share/locale/
  var/lib/polkit-1/
 -debian/polkitd.service lib/systemd/system/
+--- a/debian/changelog	2016-01-14 06:29:13.000000000 +0100
++++ b/debian/changelog	2017-07-30 21:54:00.596685745 +0200
+@@ -1,3 +1,10 @@
++policykit-1 (0.105-14.1ppa1) xenial; urgency=medium
++
++  * Non-maintainer upload.
++  * Rip out systemd.
++
++ -- gdm85 <gdm85@users.noreply.github.com>  Sun, 30 Jul 2017 21:53:19 +0200
++
+ policykit-1 (0.105-14.1) unstable; urgency=medium
+ 
+   * Non-maintainer upload.

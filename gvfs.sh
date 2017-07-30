@@ -34,26 +34,7 @@ cd ..
 
 "$OWD/build-deps-locked.sh"
 
-cat<<'EOF' | patch -p1
---- a/debian/rules	2017-03-20 23:54:22.832398302 +0100
-+++ b/debian/rules	2017-03-20 23:54:38.456398426 +0100
-@@ -20,5 +20,6 @@
- DEB_CONFIGURE_EXTRA_FLAGS += \
- 	--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
- 	--libexecdir=/usr/lib/gvfs \
--	--disable-hal
--
-+	--disable-hal \
-+	--disable-libsystemd-login \
-+	--with-systemduserunitdir=no
---- a/debian/gvfs-common.install	2017-03-21 00:25:18.948413006 +0100
-+++ b/debian/gvfs-common.install	2017-03-21 00:25:25.608413059 +0100
-@@ -1,4 +1,3 @@
- usr/share/locale
- usr/share/man/man1
- usr/share/man/man7
--usr/lib/tmpfiles.d/gvfsd-fuse-tmpfiles.conf
-EOF
+patch -p1 < "$OWD/gvfs-rules.patch"
 
 ## remove more systemd-generated expected files
 for F in debian/*.install; do
@@ -63,11 +44,15 @@ for F in debian/*.install; do
 done
 rm new.install
 
-debuild -us -uc -i -I
-cd ..
+if [ ! -z "$PPA_UPDATE" ]; then
+	"$OWD/ppa-update.sh"
+else
+	debuild -us -uc -i -I
+	cd ..
 
-## save generated .deb packages
-mv *.deb "$OUT"
+	## save generated .deb packages
+	mv *.deb "$OUT"
+fi
 
 ## cleanup
 cd

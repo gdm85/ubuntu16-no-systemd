@@ -24,16 +24,22 @@ apt-get source xfce4-session
 
 cd $(find . -name 'xfce4-session-*' -type d)
 
-patch -p1 < "$OWD/xfce4-custom-logout.patch"
+patch -p1 < "$OWD/xfce4-chglog.patch"
+
+cp "$OWD/10_xfce4-custom-logout.patch" debian/patches/
+echo 10_xfce4-custom-logout.patch >> debian/patches/series
 
 "$OWD/build-deps-locked.sh"
 
-set +e
-debuild -us -uc -i -I
-cd ..
+if [ ! -z "$PPA_UPDATE" ]; then
+	"$OWD/ppa-update.sh"
+else
+	debuild -us -uc -i -I
+	cd ..
 
-## save generated .deb packages
-mv *.deb "$OUT"
+	## save generated .deb packages
+	mv *.deb "$OUT"
+fi
 
 ## cleanup
 cd
