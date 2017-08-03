@@ -1,0 +1,231 @@
+commit d2620fe49a08cd53eef166b5bd326ed20dba3d15
+Author: gdm85 <gdm85@users.noreply.github.com>
+Date:   Fri Aug 4 02:04:50 2017 +0200
+
+    All debian changes
+
+diff --git a/debian/2 b/debian/2
+deleted file mode 100644
+index 7c6aab3..0000000
+--- a/debian/2
++++ /dev/null
+@@ -1,6 +0,0 @@
+-#!/bin/sh
+-
+-PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
+-
+-exec env - PATH=$PATH \
+-runsvdir -P /etc/service 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
+diff --git a/debian/changelog b/debian/changelog
+index ea459f5..4250c96 100644
+--- a/debian/changelog
++++ b/debian/changelog
+@@ -1,3 +1,15 @@
++runit (2.1.2-3ubuntu1ppa6) xenial; urgency=medium
++
++  * Non-maintainer upload.
++  * Fix executable bit on /usr/share/doc/runit/debian/{1,2,3}.
++  * Fix missing start in call to rmnologin.
++  * Add fix-initctl service (by Ivan Sosnitsky), enabled by default.
++  * Fix missing PREVLEVEL in runlevel 6 call to /etc/init.d/rc.
++  * Add sshd service.
++  * Remove systemd stuff.
++
++ -- gdm85 <gdm85@users.noreply.github.com>  Thu, 03 Aug 2017 22:05:53 +0200
++
+ runit (2.1.2-3ubuntu1) vivid; urgency=low
+ 
+   * Merge from Debian unstable (LP: #1407844).  Remaining changes:
+diff --git a/debian/fix-initctl.run b/debian/fix-initctl.run
+new file mode 100644
+index 0000000..9906948
+--- /dev/null
++++ b/debian/fix-initctl.run
+@@ -0,0 +1,4 @@
++#!/bin/sh
++exec 2>&1
++mkfifo /run/initctl
++exec fix-initctl
+diff --git a/debian/implicit b/debian/implicit
+index a09db2e..4aa5f02 100644
+--- a/debian/implicit
++++ b/debian/implicit
+@@ -35,7 +35,7 @@ deb-checkuid:
+ 	    debian/$*/usr/share/doc/$*/changelog'
+ 	@test -s debian/$*/usr/share/doc/$*/changelog || \
+ 	  sh -cx 'rm -f debian/$*/usr/share/doc/$*/changelog'
+-	@gzip -9 debian/$*/usr/share/doc/$*/changelog*
++	@gzip -n -9 debian/$*/usr/share/doc/$*/changelog*
+ %.deb-docs-docs:
+ 	@for i in `cat debian/$*.docs 2>/dev/null || :`; do \
+ 	  if test -d $$i; then \
+@@ -54,7 +54,7 @@ deb-checkuid:
+ 	@if test -r debian/$*.NEWS.Debian; then \
+ 	  sh -cx 'install -m0644 debian/$*.NEWS.Debian \
+ 	    debian/$*/usr/share/doc/$*/NEWS.Debian && \
+-	      gzip -9 debian/$*/usr/share/doc/$*/NEWS.Debian'; \
++	      gzip -n -9 debian/$*/usr/share/doc/$*/NEWS.Debian'; \
+ 	fi
+ %.deb-docs-examples:
+ 	@rm -rf debian/$*/usr/share/doc/$*/examples
+diff --git a/debian/rules b/debian/rules
+index 105d0d8..00afc11 100755
+--- a/debian/rules
++++ b/debian/rules
+@@ -36,6 +36,7 @@ DIR =$(shell pwd)/debian/runit
+ patch: deb-checkdir patch-stamp
+ patch-stamp:
+ 	for i in `ls -1 debian/diff/*.diff || :`; do \
++          echo "Applying $$i"; \
+ 	  patch -p1 <$$i || exit 1; \
+ 	done
+ 	touch patch-stamp
+@@ -49,6 +50,7 @@ build-stamp: patch-stamp
+ 	test -r conf-ld'{orig}' || cp -f runit/src/conf-ld conf-ld'{orig}'
+ 	echo '$(CC) $(LDFLAGS)' >runit/src/conf-ld
+ 	(cd runit/ && package/compile && package/check)
++	(cd fix-initctl/ && make fix-initctl && mv fix-initctl ../runit/command/)
+ 	touch build-stamp
+ 
+ clean: deb-checkdir deb-checkuid
+@@ -69,7 +71,7 @@ install: deb-checkdir deb-checkuid build-stamp
+ 	install -d -m0755 '$(DIR)'/sbin
+ 	install -d -m0755 '$(DIR)'/usr/bin
+ 	install -d -m0755 '$(DIR)'/usr/sbin
+-	for i in runit runit-init; do \
++	for i in runit runit-init fix-initctl; do \
+ 	  install -m0755 runit/command/$$i '$(DIR)'/sbin/ || exit 1; \
+ 	done
+ 	for i in runsvdir runsv sv svlogd chpst; do \
+@@ -81,7 +83,7 @@ install: deb-checkdir deb-checkuid build-stamp
+ 	$(STRIP) -R .comment -R .note '$(DIR)'/sbin/* '$(DIR)'/usr/sbin/* \
+ 	  '$(DIR)'/usr/bin/*
+ 	# runsvdir-start to be used from /etc/inittab
+-	install -m0755 debian/2 '$(DIR)'/usr/sbin/runsvdir-start
++	install -m0755 runit/etc/debian/2 '$(DIR)'/usr/sbin/runsvdir-start
+ 	# update-service
+ 	install -m0755 debian/update-service '$(DIR)'/usr/sbin/update-service
+ 	# getty-5 service
+@@ -89,6 +91,12 @@ install: deb-checkdir deb-checkuid build-stamp
+ 	install -m0755 debian/getty-tty5.run '$(DIR)'/etc/sv/getty-5/run
+ 	install -m0755 debian/getty-tty5.finish \
+ 	  '$(DIR)'/etc/sv/getty-5/finish
++	# fix-initctl service
++	install -d -m0755 '$(DIR)'/etc/sv/fix-initctl
++	install -m0755 debian/fix-initctl.run '$(DIR)'/etc/sv/fix-initctl/run
++	# sshd service
++	install -d -m0755 '$(DIR)'/etc/sv/sshd
++	install -m0755 debian/sshd.run '$(DIR)'/etc/sv/sshd/run
+ 	# bash completion
+ 	install -d -m0755 '$(DIR)'/usr/share/bash-completion/completions
+ 	install -m0644 debian/contrib/sv-completion.bash \
+@@ -102,19 +110,13 @@ install: deb-checkdir deb-checkuid build-stamp
+ 	done
+ 	install -m0644 debian/runsvdir-start.8 '$(DIR)'/usr/share/man/man8/
+ 	install -m0644 debian/update-service.8 '$(DIR)'/usr/share/man/man8/
+-	gzip -9 '$(DIR)'/usr/share/man/man8/*.8
++	gzip -n -9 '$(DIR)'/usr/share/man/man8/*.8
+ 	# links
+-	ln -s /var/run/sv.getty-5 '$(DIR)'/etc/sv/getty-5/supervise
+-	# additional docs
+-	install -d -m0755 '$(DIR)'/usr/share/doc/runit/debian
+-	for i in 1 2 3 ctrlaltdel; do \
+-	  install -m0644 runit/etc/debian/$$i \
+-	    '$(DIR)'/usr/share/doc/runit/debian/ || exit 1; \
+-	done
+-	#  systemd service
+-	install -d -m0755 '$(DIR)'/lib/systemd/system
+-	install -m0644 debian/systemd/runit.service \
+-	  '$(DIR)'/lib/systemd/system/
++	ln -s /var/run/sv.getty-5     '$(DIR)'/etc/sv/getty-5/supervise
++	ln -s /var/run/sv.sshd        '$(DIR)'/etc/sv/sshd/supervise
++	ln -s /var/run/sv.fix-initctl '$(DIR)'/etc/sv/fix-initctl/supervise
++	# enable initctl listener
++	(cd '$(DIR)'/etc/service && ln -s ../sv/fix-initctl fix-initctl)
+ 
+ 	#  workaround #766187
+ 	install -d -m0755 '$(DIR)'/usr/share/runit
+@@ -135,6 +137,13 @@ install: deb-checkdir deb-checkuid build-stamp
+ 	fi
+ 	#  end copy from sysvinit-2.88dsf
+ 
++	# example runit runlevels
++	install -d -m0755 '$(DIR)'/usr/share/runit/etc
++	for i in 1 2 3 ctrlaltdel; do \
++	  install -m0755 runit/etc/debian/$$i \
++	    '$(DIR)'/usr/share/runit/etc/ || exit 1; \
++	done
++
+ 	# changelog
+ 	rm -f changelog && ln -s runit/package/CHANGES changelog
+ 	# upstart file
+diff --git a/debian/runit.conffiles b/debian/runit.conffiles
+index 18a2c24..c5e2d06 100644
+--- a/debian/runit.conffiles
++++ b/debian/runit.conffiles
+@@ -1,3 +1,5 @@
+ /etc/sv/getty-5/run
+ /etc/sv/getty-5/finish
+ /etc/init/runsvdir.conf
++/etc/sv/fix-initctl/run
++/etc/sv/sshd/run
+diff --git a/debian/runit.postinst b/debian/runit.postinst
+index 9f57d47..701d671 100644
+--- a/debian/runit.postinst
++++ b/debian/runit.postinst
+@@ -41,13 +41,6 @@ fi
+ 
+ test ! -d /proc/1 || kill -s HUP 1
+ 
+-# systemd service
+-test -h /etc/systemd/system/multi-user.target.wants/runit.service ||
+-  test ! -d /etc/systemd/system/multi-user.target.wants ||
+-    ln -s /lib/systemd/system/runit.service \
+-      /etc/systemd/system/multi-user.target.wants/
+-test ! -d /run/systemd/system || systemctl start runit.service
+-
+ # remove lingering debconf-managed configuration
+ # from versions 2.1.0-1 through 2.1.1-6.1.
+ if test -r /usr/share/debconf/confmodule; then
+diff --git a/debian/runit.postrm b/debian/runit.postrm
+index 7aef87a..065fda1 100644
+--- a/debian/runit.postrm
++++ b/debian/runit.postrm
+@@ -12,12 +12,6 @@ if [ -f /etc/inittab ] && grep '#-- runit begin' /etc/inittab >/dev/null; then
+   test ! -d /proc/1 || kill -s HUP 1
+ fi
+ 
+-# systemd service
+-test ! -d /run/systemd/system ||
+-  ! systemctl is-active runit.service >/dev/null ||
+-    systemctl stop runit.service
+-rm -f /etc/systemd/system/multi-user.target.wants/runit.service
+-
+ test "$1" = 'purge' || exit 0
+ 
+ rm -rf /etc/sv/getty-5/supervise /var/run/sv.getty-5
+diff --git a/debian/sshd.run b/debian/sshd.run
+new file mode 100644
+index 0000000..2df54ed
+--- /dev/null
++++ b/debian/sshd.run
+@@ -0,0 +1,4 @@
++#!/bin/sh
++exec 2>&1
++mkdir -p /var/run/sshd || exit $?
++exec /usr/sbin/sshd -D -e
+diff --git a/debian/systemd/runit.service b/debian/systemd/runit.service
+deleted file mode 100644
+index 888f8cd..0000000
+--- a/debian/systemd/runit.service
++++ /dev/null
+@@ -1,9 +0,0 @@
+-[Unit]
+-Description=Runit service supervision
+-
+-[Service]
+-ExecStart=/usr/sbin/runsvdir-start
+-Restart=always
+-
+-[Install]
+-WantedBy=multi-user.target

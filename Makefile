@@ -1,5 +1,5 @@
 
-PKGS:=udisks2 policykit-1 gvfs xfce4-session initscripts
+PKGS:=udisks2 policykit-1 gvfs xfce4-session initscripts runit
 
 all: $(PKGS)
 	@echo ".deb files generated in deb/, now run 'make install' for installation"
@@ -30,9 +30,14 @@ initscripts: build-deps
 	mkdir -p debs/
 	./initscripts.sh "$(CURDIR)/debs"
 
+runit: build-deps
+	mkdir -p debs/
+	./runit.sh "$(CURDIR)/debs"
+
 ## install necessary packages for building debs
 build-deps:
 	sudo apt-get install -y fakeroot devscripts build-essential equivs
+	sudo apt-get build-dep runit
 	sudo apt-get build-dep xfce4-session ## avoid pulling in systemd and libsystemd-dev
 
 .PHONY: all $(PKGS) build-deps install
