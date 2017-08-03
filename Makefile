@@ -1,5 +1,5 @@
 
-PKGS:=udisks2 policykit-1 gvfs xfce4-session
+PKGS:=udisks2 policykit-1 gvfs xfce4-session initscripts
 
 all: $(PKGS)
 	@echo ".deb files generated in deb/, now run 'make install' for installation"
@@ -8,9 +8,7 @@ all: $(PKGS)
 install:
 	sudo apt-get install -y x11-utils
 	sudo dpkg -i debs/*.deb
-	sudo apt-mark hold gvfs-common gvfs-daemons gvfs-libs gvfs-backends
-	sudo apt-mark hold policykit-1
-	sudo apt-mark hold udisks2
+	sudo apt-mark hold gvfs-common gvfs-daemons gvfs-libs gvfs-backends policykit-1 udisks2 xfce4-session
 
 udisks2: build-deps
 	mkdir -p debs/
@@ -28,9 +26,13 @@ xfce4-session: build-deps
 	mkdir -p debs/
 	./xfce4-session.sh "$(CURDIR)/debs"
 
+initscripts: build-deps
+	mkdir -p debs/
+	./initscripts.sh "$(CURDIR)/debs"
+
 ## install necessary packages for building debs
 build-deps:
 	sudo apt-get install -y fakeroot devscripts build-essential equivs
 	sudo apt-get build-dep xfce4-session ## avoid pulling in systemd and libsystemd-dev
 
-.PHONY: all udisks2 policykit-1 gvfs xfce4-session build-deps install
+.PHONY: all $(PKGS) build-deps install
