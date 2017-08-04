@@ -1,0 +1,208 @@
+commit 4d86096c0768ca08852bd3003b28bde13066d21f
+Author: gdm85 <gdm85@users.noreply.github.com>
+Date:   Fri Aug 4 02:04:32 2017 +0200
+
+    First chunk of solid changes
+
+diff --git a/fix-initctl/fix-initctl.c b/fix-initctl/fix-initctl.c
+new file mode 100644
+index 0000000..0b42540
+--- /dev/null
++++ b/fix-initctl/fix-initctl.c
+@@ -0,0 +1,53 @@
++#include <sys/select.h>
++#include <sys/time.h>
++#include <sys/types.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <time.h>
++#include "initreq.h"
++#include <sys/select.h>
++#include <memory.h>
++#include <stdio.h>
++
++void print_initreq(struct init_request req)
++{
++	printf("cmd = %i\nrunlevel = %i\n sleeptime = %i\n", req.cmd,req.runlevel,req.sleeptime);
++}
++
++const struct timeval a =  { .tv_sec = 1 , .tv_usec = 0.5};
++int main(int argc, char **argv)
++{
++	int ctlfd = open("/run/initctl", O_RDWR);
++	if (ctlfd == -1) {
++		fprintf(stderr, "ERROR: /run/initctl does not exist\n");
++		return -1;
++	}
++
++	struct timeval select_timeout;
++	struct init_request initreq;
++	fd_set readfd, write, except;
++	char runlevel[2];
++
++	while(1)
++	{
++		memset(&runlevel,0,sizeof(runlevel));
++		memset(&initreq,0,sizeof(initreq));
++		FD_ZERO (&readfd);
++		FD_ZERO (&write);
++		FD_ZERO (&except);
++		FD_SET(ctlfd, &readfd);
++		select(ctlfd + 1, &readfd,&write,&except,&select_timeout);
++		if FD_ISSET(ctlfd, &readfd)
++		{
++			read(ctlfd, &initreq, sizeof(initreq));
++			//print_initreq(initreq);
++			if ((INIT_CMD_RUNLVL == initreq.cmd) && 
++			(('0' == initreq.runlevel)||('6' == initreq.runlevel)))
++			{
++				runlevel[0] = initreq.runlevel;
++				execl("/sbin/runit-init", "runit-init" ,runlevel, NULL);
++			}
++		}
++	}
++	return 0;
++}
+diff --git a/fix-initctl/initreq.h b/fix-initctl/initreq.h
+new file mode 100644
+index 0000000..e234215
+--- /dev/null
++++ b/fix-initctl/initreq.h
+@@ -0,0 +1,86 @@
++/*
++ * initreq.h	Interface to talk to init through /dev/initctl.
++ *
++ *		Copyright (C) 1995-2004 Miquel van Smoorenburg
++ *
++ *		This program is free software; you can redistribute it and/or modify
++ *		it under the terms of the GNU General Public License as published by
++ *		the Free Software Foundation; either version 2 of the License, or
++ *		(at your option) any later version.
++ *
++ *		This program is distributed in the hope that it will be useful,
++ *		but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *		GNU General Public License for more details.
++ *
++ *		You should have received a copy of the GNU General Public License
++ *		along with this program; if not, write to the Free Software
++ *		Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ *
++ * Version:     @(#)initreq.h  1.28  31-Mar-2004 MvS
++ *
++ */
++#ifndef _INITREQ_H
++#define _INITREQ_H
++
++#include <sys/param.h>
++
++#ifndef INIT_FIFO
++#  if defined(__FreeBSD_kernel__)
++#    define INIT_FIFO  "/etc/.initctl"
++#  else
++#    define INIT_FIFO  "/dev/initctl"
++#  endif
++#endif
++
++#define INIT_MAGIC 0x03091969
++#define INIT_CMD_START		0
++#define INIT_CMD_RUNLVL		1
++#define INIT_CMD_POWERFAIL	2
++#define INIT_CMD_POWERFAILNOW	3
++#define INIT_CMD_POWEROK	4
++#define INIT_CMD_BSD		5
++#define INIT_CMD_SETENV		6
++#define INIT_CMD_UNSETENV	7
++
++#ifdef MAXHOSTNAMELEN
++#  define INITRQ_HLEN	MAXHOSTNAMELEN
++#else
++#  define INITRQ_HLEN	64
++#endif
++
++/*
++ *	This is what BSD 4.4 uses when talking to init.
++ *	Linux doesn't use this right now.
++ */
++struct init_request_bsd {
++	char	gen_id[8];		/* Beats me.. telnetd uses "fe" */
++	char	tty_id[16];		/* Tty name minus /dev/tty      */
++	char	host[INITRQ_HLEN];	/* Hostname                     */
++	char	term_type[16];		/* Terminal type                */
++	int	signal;			/* Signal to send               */
++	int	pid;			/* Process to send to           */
++	char	exec_name[128];	        /* Program to execute           */
++	char	reserved[128];		/* For future expansion.        */
++};
++
++
++/*
++ *	Because of legacy interfaces, "runlevel" and "sleeptime"
++ *	aren't in a seperate struct in the union.
++ *
++ *	The weird sizes are because init expects the whole
++ *	struct to be 384 bytes.
++ */
++struct init_request {
++	int	magic;			/* Magic number                 */
++	int	cmd;			/* What kind of request         */
++	int	runlevel;		/* Runlevel to change to        */
++	int	sleeptime;		/* Time between TERM and KILL   */
++	union {
++		struct init_request_bsd	bsd;
++		char			data[368];
++	} i;
++};
++
++#endif
+diff --git a/runit-2.1.2/doc/debian b/runit-2.1.2/doc/debian
+deleted file mode 120000
+index 8784129..0000000
+--- a/runit-2.1.2/doc/debian
++++ /dev/null
+@@ -1 +0,0 @@
+-../etc/debian
+\ No newline at end of file
+diff --git a/runit-2.1.2/etc/debian/1 b/runit-2.1.2/etc/debian/1
+index 4cd10cb..313c777 100755
+--- a/runit-2.1.2/etc/debian/1
++++ b/runit-2.1.2/etc/debian/1
+@@ -4,7 +4,7 @@
+ PATH=/command:/sbin:/bin:/usr/sbin:/usr/bin
+ 
+ /etc/init.d/rcS
+-/etc/init.d/rmnologin
++/etc/init.d/rmnologin start
+ 
+ touch /etc/runit/stopit
+ chmod 0 /etc/runit/stopit
+diff --git a/runit-2.1.2/etc/debian/2 b/runit-2.1.2/etc/debian/2
+deleted file mode 120000
+index 5fae01f..0000000
+--- a/runit-2.1.2/etc/debian/2
++++ /dev/null
+@@ -1 +0,0 @@
+-../2
+\ No newline at end of file
+diff --git a/runit-2.1.2/etc/debian/2 b/runit-2.1.2/etc/debian/2
+new file mode 100644
+index 0000000..7c6aab3
+--- /dev/null
++++ b/runit-2.1.2/etc/debian/2
+@@ -0,0 +1,6 @@
++#!/bin/sh
++
++PATH=/usr/local/bin:/usr/local/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin
++
++exec env - PATH=$PATH \
++runsvdir -P /etc/service 'log: ...........................................................................................................................................................................................................................................................................................................................................................................................................'
+diff --git a/runit-2.1.2/etc/debian/3 b/runit-2.1.2/etc/debian/3
+index 10354d7..e446689 100755
+--- a/runit-2.1.2/etc/debian/3
++++ b/runit-2.1.2/etc/debian/3
+@@ -11,4 +11,5 @@ sv -w196 force-stop /service/*
+ sv exit /service/*
+ 
+ echo 'Shutdown...'
++export PREVLEVEL=S
+ /etc/init.d/rc $LAST
