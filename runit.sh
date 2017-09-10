@@ -6,7 +6,7 @@
 #
 
 if [ ! $# -eq 1 ]; then
-	echo "Usage: ./initscripts.sh output-directory/" 1>&2
+	echo "Usage: ./runit.sh output-directory/" 1>&2
 	exit 1
 fi
 
