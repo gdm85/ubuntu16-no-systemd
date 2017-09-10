@@ -1,0 +1,43 @@
+--- a/rfkill-0.5/debian/changelog	2017-09-10 21:34:19.796088419 +0200
++++ b/rfkill-0.5/debian/changelog	2017-09-10 21:36:53.921123298 +0200
+@@ -1,3 +1,9 @@
++rfkill (0.5-1ubuntu3ppa2) xenial; urgency=medium
++
++  * Remove systemd dependency.
++
++ -- gdm85 <gdm85@users.noreply.github.com>  Sun, 10 Sep 2017 21:36:13 +0100
++
+ rfkill (0.5-1ubuntu3) xenial; urgency=medium
+ 
+   * Drop obsolete and no-op dh_installinit --upstart-only option.
+--- a/rfkill-0.5/debian/control	2017-09-10 21:34:19.796088419 +0200
++++ b/rfkill-0.5/debian/control	2017-09-10 21:35:48.226452303 +0200
+@@ -11,7 +11,7 @@
+ 
+ Package: rfkill
+ Architecture: any
+-Depends: ${shlibs:Depends}, ${misc:Depends}, systemd (>= 215-5ubuntu2)
++Depends: ${shlibs:Depends}, ${misc:Depends}
+ Description: tool for enabling and disabling wireless devices
+  rfkill is a simple tool for accessing the Linux rfkill device interface,
+  which is used to enable and disable wireless networking devices, typically
+--- a/rfkill-0.5/debian/rfkill-restore.upstart	2017-09-10 21:34:19.796088419 +0200
++++ b/rfkill-0.5/debian/rfkill-restore.upstart	2017-09-10 21:37:35.496304630 +0200
+@@ -12,6 +12,6 @@
+     fi
+     for device in /sys/class/rfkill/*; do
+         [ ! -d $device ] && continue
+-        /lib/systemd/systemd-rfkill load `basename $device`
++        #/lib/systemd/systemd-rfkill load `basename $device`
+     done
+ end script
+--- a/rfkill-0.5/debian/rfkill-store.upstart	2017-09-10 21:34:19.796088419 +0200
++++ b/rfkill-0.5/debian/rfkill-store.upstart	2017-09-10 21:37:27.792455181 +0200
+@@ -13,6 +13,6 @@
+ 
+     for device in /sys/class/rfkill/*; do
+         [ ! -d $device ] && continue
+-        /lib/systemd/systemd-rfkill save `basename $device`
++        #/lib/systemd/systemd-rfkill save `basename $device`
+     done
+ end script
