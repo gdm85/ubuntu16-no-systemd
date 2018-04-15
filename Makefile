@@ -37,7 +37,7 @@ runit: build-deps
 ## install necessary packages for building debs
 build-deps:
 	sudo apt-get install -y fakeroot devscripts build-essential equivs
-	sudo apt-get build-dep runit
-	sudo apt-get build-dep xfce4-session ## avoid pulling in systemd and libsystemd-dev
+	sudo apt-get build-dep -y runit
+	sudo apt-get build-dep -y xfce4-session ## avoid pulling in systemd and libsystemd-dev
 
 .PHONY: all $(PKGS) build-deps install
