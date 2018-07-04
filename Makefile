@@ -1,5 +1,5 @@
 
-PKGS:=udisks2 policykit-1 gvfs xfce4-session initscripts runit
+PKGS:=udisks2 policykit-1 gvfs xfce4-session initscripts runit rfkill
 
 all: $(PKGS)
 	@echo ".deb files generated in deb/, now run 'make install' for installation"
@@ -33,6 +33,10 @@ initscripts: build-deps
 runit: build-deps
 	mkdir -p debs/
 	./runit.sh "$(CURDIR)/debs"
+
+rfkill: build-deps
+	mkdir -p debs/
+	./rfkill.sh "$(CURDIR)/debs"
 
 ## install necessary packages for building debs
 build-deps:
